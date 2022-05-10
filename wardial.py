@@ -238,19 +238,20 @@ def wardial(hosts, **kwargs):
     # Ensure that all of the kwargs parameters get passed to `_wardial_async`.
     # You will have to do some post-processing of the results of this function to convert the output.
 
-    max_connections = 500
-    timeout = 10
-    schema = 'http'
-
+    if type(hosts != list):
+        length = 0
+        list_hosts = []
+        for host in hosts:
+            list_hosts.append(host)
+            length += 1
+        hosts = list_hosts  
+    
     loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     bools = loop.run_until_complete(_wardial_async(hosts, kwargs))
-
     hosts = list(compress(hosts, bools))
 
     return hosts
-
-    # return len(hosts)
-    # return [hosts[i] for i in range(len(hosts)) if bools[i] == True]
 
 if __name__=='__main__':
 
