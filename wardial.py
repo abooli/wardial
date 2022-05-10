@@ -1,6 +1,7 @@
 import aiohttp
 import asyncio
 import logging
+from itertools import compress
 
 
 def increment_ip(ip):
@@ -204,9 +205,15 @@ async def _wardial_async(hosts, max_connections=500, timeout=10, schema='http'):
         # The following code is "correct" in the sense that it gets the right results.
         # The problem is that it is not concurrent.
         # Modify the code to use the `asyncio.gather` function to enable concurrency.
-        results = []
-        for host in hosts:
-            results.append(await is_server_at_host(session,host))
+        # results = []
+        # for host in hosts:
+        #     results.append(await is_server_at_host(session,host))
+        # return results
+
+        results = await asyncio.gather(
+            *(is_server_at_host(session, host) for host in hosts)
+        )
+
         return results
 
 
@@ -230,7 +237,20 @@ def wardial(hosts, **kwargs):
     # and use this event loop to call the `_wardial_async` function.
     # Ensure that all of the kwargs parameters get passed to `_wardial_async`.
     # You will have to do some post-processing of the results of this function to convert the output.
-    return []
+
+    max_connections = 500
+    timeout = 10
+    schema = 'http'
+
+    loop = asyncio.new_event_loop()
+    bools = loop.run_until_complete(_wardial_async(hosts, kwargs))
+
+    hosts = list(compress(hosts, bools))
+
+    return hosts
+
+    # return len(hosts)
+    # return [hosts[i] for i in range(len(hosts)) if bools[i] == True]
 
 if __name__=='__main__':
 
